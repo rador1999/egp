@@ -1,3 +1,4 @@
 #EXTM3U
-#EXTINF:-1,Valathu Vashathe Kallan (2026) 2160p
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXTINF:-1 tvg-name="Valathu Vashathe Kallan (2026)" tvg-type="movie" group-title="Movies",Valathu Vashathe Kallan (2026) 2160p
 https://thugsmirror.com/0:/Valathu%20Vashathe%20Kallan%20%282026%29%202160p%20AMZN%20WEB-DL%20x265%20HEVC%20%5BOrg%20AMZN%20Hindi%20DDP%202.0%20~224Kbps%20%2B%20Malayalam%20DDP%205.1%5D%20ESub%20-%20BunnyJMB.mkv
