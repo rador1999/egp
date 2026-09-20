@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AutoPost Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface1:#f9f8f5;--border:#e5e3dc;--border-strong:#ccc9be;
+  --text:#1a1a18;--text2:#6b6a63;--text3:#9b9a93;
+  --accent:#185FA5;--accent-bg:#e6f1fb;--accent-text:#0c447c;
+  --success:#3B6D11;--success-bg:#eaf3de;--success-text:#27500a;
+  --warning:#854F0B;--warning-bg:#faeeda;--warning-text:#633806;
+  --danger:#A32D2D;--danger-bg:#fcebeb;--danger-text:#791f1f;
+  --radius:8px;--sidebar:220px;
+}
+[data-dark]{
+  --bg:#1a1a18;--surface:#242422;--surface1:#2c2c2a;--border:#3a3a37;--border-strong:#555;
+  --text:#e8e6df;--text2:#9b9a93;--text3:#6b6a63;
+  --accent-bg:#0c447c;--accent-text:#b5d4f4;
+  --success-bg:#173404;--success-text:#c0dd97;
+  --warning-bg:#412402;--warning-text:#fac775;
+  --danger-bg:#501313;--danger-text:#f7c1c1;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* sidebar */
+#sidebar{width:var(--sidebar);background:var(--surface);border-right:0.5px solid var(--border);display:flex;flex-direction:column;padding:0;flex-shrink:0}
+.logo{padding:18px 16px 12px;font-size:15px;font-weight:500;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;font-size:13px;color:var(--text2);border-radius:0;transition:background .15s}
+.nav-item:hover{background:var(--surface1);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-label{font-size:11px;color:var(--text3);padding:12px 16px 4px;text-transform:uppercase;letter-spacing:.05em}
+.sidebar-bottom{padding:12px 16px;border-top:0.5px solid var(--border)}
+
+/* main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{padding:12px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+.topbar-title{font-size:15px;font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:10px}
+#content{flex:1;overflow-y:auto;padding:20px}
+
+/* pages */
+.page{display:none}
+.page.active{display:block}
+
+/* stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.stat-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.stat-val{font-size:22px;font-weight:500}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* task table */
+.section{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:16px}
+.section-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-title{font-weight:500;font-size:13px}
+.task-row{display:grid;grid-template-columns:2fr 100px 120px 1fr 140px;gap:8px;align-items:center;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:13px}
+.task-row:last-child{border-bottom:none}
+.task-row.header{font-size:11px;color:var(--text3);background:var(--surface1);font-weight:500;text-transform:uppercase;letter-spacing:.04em;border-radius:var(--radius) var(--radius) 0 0}
+.task-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-sub{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-success{background:var(--success-bg);color:var(--success-text)}
+.badge-warning{background:var(--warning-bg);color:var(--warning-text)}
+.badge-danger{background:var(--danger-bg);color:var(--danger-text)}
+.badge-accent{background:var(--accent-bg);color:var(--accent-text)}
+.badge-neutral{background:var(--surface1);color:var(--text2);border:0.5px solid var(--border)}
+
+/* progress steps */
+.steps{display:flex;align-items:center;gap:0}
+.step{display:flex;align-items:center;gap:4px;font-size:11px}
+.step-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.step-done .step-dot{background:var(--success)}
+.step-active .step-dot{background:var(--accent)}
+.step-fail .step-dot{background:var(--danger)}
+.step-idle .step-dot{background:var(--border-strong)}
+.step-line{width:12px;height:1px;background:var(--border);margin:0 2px}
+
+/* action buttons */
+.btn{padding:5px 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:background .15s}
+.btn:hover{background:var(--surface1)}
+.btn-danger{border-color:var(--danger);color:var(--danger-text)}
+.btn-accent{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-text)}
+.btn-success{background:var(--success-bg);border-color:var(--success);color:var(--success-text)}
+
+/* alert banner */
+.alert{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius);margin-bottom:16px;font-size:13px}
+.alert-danger{background:var(--danger-bg);border:0.5px solid var(--danger);color:var(--danger-text)}
+.alert-warning{background:var(--warning-bg);border:0.5px solid var(--warning);color:var(--warning-text)}
+.alert svg{width:16px;height:16px;flex-shrink:0}
+
+/* modal overlay */
+.modal-overlay{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;border:0.5px solid var(--border);padding:24px;width:380px;position:relative}
+.modal-title{font-size:15px;font-weight:500;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
+.modal label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;margin-top:12px}
+.modal input{width:100%;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface1);color:var(--text);font-size:13px}
+.otp-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}
+.otp-grid input{text-align:center;font-size:18px;font-weight:500;padding:10px 4px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface1);color:var(--text)}
+.modal-foot{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+.btn-primary{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:var(--radius);font-size:13px;cursor:pointer}
+.btn-primary:hover{opacity:.9}
+.btn-ghost{padding:8px 14px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:transparent;color:var(--text2);font-size:13px;cursor:pointer}
+.btn-ghost:hover{background:var(--surface1)}
+
+/* log viewer */
+.log-box{background:#1a1a18;color:#c8c7be;font-family:monospace;font-size:12px;padding:14px;border-radius:var(--radius);line-height:1.8;max-height:260px;overflow-y:auto;margin-top:8px}
+.log-ok{color:#97C459}.log-err{color:#F09595}.log-info{color:#85B7EB}.log-warn{color:#EF9F27}
+
+/* OTT accounts */
+.ott-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px}
+.ott-card{background:var(--surface1);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px}
+.ott-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ott-name{font-weight:500;font-size:13px}
+.ott-info{font-size:12px;color:var(--text2);margin-bottom:8px}
+.ott-actions{display:flex;gap:6px}
+
+/* template page */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;color:var(--text2)}
+.form-group input,.form-group select,.form-group textarea{padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface1);color:var(--text);font-size:13px;font-family:inherit}
+.thumb-preview{width:100%;height:100px;background:var(--surface1);border:0.5px dashed var(--border-strong);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;cursor:pointer}
+.thumb-preview img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle{position:relative;width:32px;height:18px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border-strong);border-radius:9px;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(14px)}
+
+/* site checkboxes */
+.site-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.site-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;border:0.5px solid var(--border-strong);font-size:12px;cursor:pointer;background:var(--surface1)}
+.site-chip input{display:none}
+.site-chip.checked{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-text)}
+
+/* notification log */
+.notif-row{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:13px}
+.notif-row:last-child{border-bottom:none}
+.notif-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.notif-time{font-size:11px;color:var(--text3);margin-top:2px}
+</style>
+</head>
+<body>
+
+<!-- sidebar -->
+<div id="sidebar">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    AutoPost
+  </div>
+  <nav>
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('tasks',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Tasks
+      <span class="badge badge-danger" style="margin-left:auto">2</span>
+    </div>
+    <div class="nav-item" onclick="showPage('ott',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 3-6 3V9z"/></svg>
+      OTT Accounts
+      <span class="badge badge-warning" style="margin-left:auto">!</span>
+    </div>
+    <div class="nav-label">Config</div>
+    <div class="nav-item" onclick="showPage('templates',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 8h18M7 4v4"/></svg>
+      Templates
+    </div>
+    <div class="nav-item" onclick="showPage('logs',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Logs
+    </div>
+    <div class="nav-item" onclick="showPage('notifications',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Notifications
+      <span class="badge badge-danger" style="margin-left:auto">3</span>
+    </div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:12px;color:var(--text2)">Dark mode</span>
+      <label class="toggle"><input type="checkbox" id="darkToggle" onchange="toggleDark(this)"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- main content -->
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <div class="badge badge-success" style="font-size:12px">● System running</div>
+      <button class="btn btn-accent" onclick="openOTPModal('Manual')">+ Add task</button>
+    </div>
+  </div>
+
+  <div id="content" style="position:relative">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="alert alert-warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div><strong>ZEE5 account logged out</strong> — Session expired. <a href="#" onclick="showPage('ott',document.querySelector('[onclick*=ott]'));return false" style="color:inherit;font-weight:500">Login from OTT Accounts →</a></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Today's tasks</div><div class="stat-val">12</div><div class="stat-sub">8 completed</div></div>
+        <div class="stat-card"><div class="stat-label">Successful posts</div><div class="stat-val" style="color:var(--success)">8</div><div class="stat-sub">across 5 sites</div></div>
+        <div class="stat-card"><div class="stat-label">Failed</div><div class="stat-val" style="color:var(--danger)">2</div><div class="stat-sub">needs attention</div></div>
+        <div class="stat-card"><div class="stat-label">In progress</div><div class="stat-val" style="color:var(--accent)">2</div><div class="stat-sub">running now</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <span class="section-title">Live task feed</span>
+          <button class="btn" onclick="showPage('tasks',document.querySelector('[onclick*=tasks]'))">View all</button>
+        </div>
+        <div class="task-row header">
+          <div>Show / Episode</div><div>Source</div><div>Status</div><div>Progress</div><div>Actions</div>
+        </div>
+        <!-- row 1 -->
+        <div class="task-row">
+          <div><div class="task-name">Bigg Boss S18 EP142</div><div class="task-sub">Hotstar · Site 1,2,3</div></div>
+          <div><span class="badge badge-neutral">Vimeo</span></div>
+          <div><span class="badge badge-success">Done</span></div>
+          <div>
+            <div class="steps">
+              <div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-done"><div class="step-dot"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px"><button class="btn" onclick="openLogModal('Bigg Boss S18 EP142')">Logs</button></div>
+        </div>
+        <!-- row 2 -->
+        <div class="task-row">
+          <div><div class="task-name">Kana Kaanum Kaalangal EP88</div><div class="task-sub">Sun NXT · Site 2,4</div></div>
+          <div><span class="badge badge-neutral">JC</span></div>
+          <div><span class="badge badge-accent">Uploading</span></div>
+          <div>
+            <div class="steps">
+              <div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-active"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-idle"><div class="step-dot"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px"><button class="btn" onclick="openLogModal('Kana Kaanum')">Logs</button></div>
+        </div>
+        <!-- row 3: failed -->
+        <div class="task-row" style="background:var(--danger-bg)">
+          <div><div class="task-name">Sembaruthi EP1205</div><div class="task-sub">ZEE5 · Site 1,3,5 — Account logged out</div></div>
+          <div><span class="badge badge-neutral">Vimeo</span></div>
+          <div><span class="badge badge-danger">Failed</span></div>
+          <div>
+            <div class="steps">
+              <div class="step step-fail"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-idle"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-idle"><div class="step-dot"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-danger" onclick="openRetryModal('Sembaruthi EP1205')">Retry</button>
+            <button class="btn" onclick="openLogModal('Sembaruthi')">Logs</button>
+          </div>
+        </div>
+        <!-- row 4: failed -->
+        <div class="task-row" style="background:var(--danger-bg)">
+          <div><div class="task-name">Vijay TV Mazhavil EP34</div><div class="task-sub">ZEE5 · Site 2,3</div></div>
+          <div><span class="badge badge-neutral">Vimeo</span></div>
+          <div><span class="badge badge-danger">Failed</span></div>
+          <div>
+            <div class="steps">
+              <div class="step step-fail"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-idle"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-idle"><div class="step-dot"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-danger" onclick="openRetryModal('Mazhavil EP34')">Retry</button>
+            <button class="btn" onclick="openLogModal('Mazhavil')">Logs</button>
+          </div>
+        </div>
+        <!-- row 5 -->
+        <div class="task-row">
+          <div><div class="task-name">Kaadhal Kondein EP22</div><div class="task-sub">SonyLIV · Site 4,5</div></div>
+          <div><span class="badge badge-neutral">JC</span></div>
+          <div><span class="badge badge-accent">Downloading</span></div>
+          <div>
+            <div class="steps">
+              <div class="step step-active"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-idle"><div class="step-dot"></div></div><div class="step-line"></div>
+              <div class="step step-idle"><div class="step-dot"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px"><button class="btn" onclick="openLogModal('Kaadhal')">Logs</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASKS PAGE -->
+    <div class="page" id="page-tasks">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn btn-accent" onclick="alert('Schedule new task form')">+ New task</button>
+        <select class="btn" style="padding:5px 10px">
+          <option>All OTTs</option><option>Hotstar</option><option>Sun NXT</option><option>ZEE5</option><option>SonyLIV</option>
+        </select>
+        <select class="btn" style="padding:5px 10px">
+          <option>All statuses</option><option>Done</option><option>Failed</option><option>Running</option>
+        </select>
+      </div>
+      <div class="section">
+        <div class="section-head"><span class="section-title">All tasks — today</span><span class="badge badge-neutral">12 tasks</span></div>
+        <div class="task-row header">
+          <div>Show / Episode</div><div>Source</div><div>Status</div><div>Pipeline</div><div>Actions</div>
+        </div>
+        <div class="task-row"><div><div class="task-name">Bigg Boss S18 EP142</div><div class="task-sub">Hotstar</div></div><div><span class="badge badge-neutral">Vimeo</span></div><div><span class="badge badge-success">Done</span></div><div><div class="steps"><div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-done"><div class="step-dot"></div></div></div></div><div style="display:flex;gap:4px"><button class="btn" onclick="openLogModal('Bigg Boss')">Logs</button></div></div>
+        <div class="task-row"><div><div class="task-name">Sembaruthi EP1205</div><div class="task-sub">ZEE5</div></div><div><span class="badge badge-neutral">Vimeo</span></div><div><span class="badge badge-danger">Failed</span></div><div><div class="steps"><div class="step step-fail"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-idle"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-idle"><div class="step-dot"></div></div></div></div><div style="display:flex;gap:4px"><button class="btn btn-danger" onclick="openRetryModal('Sembaruthi EP1205')">Retry</button><button class="btn" onclick="openLogModal('Sembaruthi')">Logs</button></div></div>
+        <div class="task-row"><div><div class="task-name">Kana Kaanum EP88</div><div class="task-sub">Sun NXT</div></div><div><span class="badge badge-neutral">JC</span></div><div><span class="badge badge-accent">Uploading</span></div><div><div class="steps"><div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-active"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-idle"><div class="step-dot"></div></div></div></div><div style="display:flex;gap:4px"><button class="btn" onclick="openLogModal('Kana')">Logs</button></div></div>
+        <div class="task-row"><div><div class="task-name">Kaadhal Kondein EP22</div><div class="task-sub">SonyLIV</div></div><div><span class="badge badge-neutral">JC</span></div><div><span class="badge badge-accent">Downloading</span></div><div><div class="steps"><div class="step step-active"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-idle"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-idle"><div class="step-dot"></div></div></div></div><div style="display:flex;gap:4px"><button class="btn" onclick="openLogModal('Kaadhal')">Logs</button></div></div>
+        <div class="task-row"><div><div class="task-name">Vijay TV Mazhavil EP34</div><div class="task-sub">ZEE5</div></div><div><span class="badge badge-neutral">Vimeo</span></div><div><span class="badge badge-danger">Failed</span></div><div><div class="steps"><div class="step step-fail"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-idle"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-idle"><div class="step-dot"></div></div></div></div><div style="display:flex;gap:4px"><button class="btn btn-danger" onclick="openRetryModal('Mazhavil EP34')">Retry</button><button class="btn" onclick="openLogModal('Mazhavil')">Logs</button></div></div>
+        <div class="task-row"><div><div class="task-name">Azhagiya Tamizh Magal EP310</div><div class="task-sub">Sun NXT</div></div><div><span class="badge badge-neutral">Vimeo</span></div><div><span class="badge badge-success">Done</span></div><div><div class="steps"><div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-done"><div class="step-dot"></div></div></div></div><div><button class="btn" onclick="openLogModal('Azhagiya')">Logs</button></div></div>
+        <div class="task-row"><div><div class="task-name">Raja Rani S2 EP55</div><div class="task-sub">Hotstar</div></div><div><span class="badge badge-neutral">JC</span></div><div><span class="badge badge-success">Done</span></div><div><div class="steps"><div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-done"><div class="step-dot"></div></div><div class="step-line"></div><div class="step step-done"><div class="step-dot"></div></div></div></div><div><button class="btn" onclick="openLogModal('Raja Rani')">Logs</button></div></div>
+      </div>
+    </div>
+
+    <!-- OTT ACCOUNTS PAGE -->
+    <div class="page" id="page-ott">
+      <div class="alert alert-danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        ZEE5 session expired — tasks are paused. Login below to resume.
+      </div>
+      <div class="section">
+        <div class="section-head"><span class="section-title">OTT account status</span></div>
+        <div class="ott-grid">
+          <!-- Hotstar -->
+          <div class="ott-card">
+            <div class="ott-head"><span class="ott-name">Hotstar</span><span class="badge badge-success">● Active</span></div>
+            <div class="ott-info">Account: user@example.com<br>Session expires in 18 days</div>
+            <div class="ott-actions"><button class="btn" onclick="openLoginModal('Hotstar')">Re-login</button><button class="btn btn-success">Test connection</button></div>
+          </div>
+          <!-- Sun NXT -->
+          <div class="ott-card">
+            <div class="ott-head"><span class="ott-name">Sun NXT</span><span class="badge badge-success">● Active</span></div>
+            <div class="ott-info">Account: user@example.com<br>Session expires in 5 days</div>
+            <div class="ott-actions"><button class="btn" onclick="openLoginModal('Sun NXT')">Re-login</button><button class="btn btn-success">Test connection</button></div>
+          </div>
+          <!-- ZEE5 -->
+          <div class="ott-card" style="border-color:var(--danger)">
+            <div class="ott-head"><span class="ott-name">ZEE5</span><span class="badge badge-danger">● Logged out</span></div>
+            <div class="ott-info" style="color:var(--danger-text)">Session expired 2 hrs ago<br>3 tasks paused</div>
+            <div class="ott-actions"><button class="btn btn-danger" onclick="openLoginModal('ZEE5')">Login now</button><button class="btn" onclick="openLogModal('ZEE5')">Logs</button></div>
+          </div>
+          <!-- SonyLIV -->
+          <div class="ott-card">
+            <div class="ott-head"><span class="ott-name">SonyLIV</span><span class="badge badge-success">● Active</span></div>
+            <div class="ott-info">Account: user@example.com<br>Session expires in 12 days</div>
+            <div class="ott-actions"><button class="btn" onclick="openLoginModal('SonyLIV')">Re-login</button><button class="btn btn-success">Test connection</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMPLATES PAGE -->
+    <div class="page" id="page-templates">
+      <div style="display:flex;gap:8px;margin-bottom:16px"><button class="btn btn-accent">+ New template</button></div>
+      <div class="section">
+        <div class="section-head"><span class="section-title">Create / edit show template</span></div>
+        <div class="form-grid">
+          <div class="form-group"><label>Show name</label><input type="text" placeholder="e.g. Bigg Boss S18"></div>
+          <div class="form-group"><label>Category</label>
+            <select><option>-- Select category --</option><option>Tamil Serial</option><option>Reality Show</option><option>Tamil Movies</option><option>Sun TV Shows</option><option>Zee Tamil</option></select>
+          </div>
+          <div class="form-group"><label>OTT source</label>
+            <select><option>Hotstar</option><option>Sun NXT</option><option>ZEE5</option><option>SonyLIV</option></select>
+          </div>
+          <div class="form-group"><label>Upload source</label>
+            <select><option>Vimeo (Source 01)</option><option>JC Player (Source 02)</option></select>
+          </div>
+          <div class="form-group full"><label>Post to sites</label>
+            <div class="site-list">
+              <label class="site-chip checked"><input type="checkbox" checked>Site 1 — tamildhool.com</label>
+              <label class="site-chip checked"><input type="checkbox" checked>Site 2 — tamilgun.com</label>
+              <label class="site-chip"><input type="checkbox">Site 3 — tamilblasters.com</label>
+              <label class="site-chip"><input type="checkbox">Site 4 — isaidub.com</label>
+              <label class="site-chip"><input type="checkbox">Site 5 — moviesda.com</label>
+            </div>
+          </div>
+          <div class="form-group"><label>Thumbnail image</label>
+            <div class="thumb-preview" onclick="alert('File picker — image will be uploaded once and reused for all episodes')">
+              <span>+ Upload thumbnail (reused for all episodes)</span>
+            </div>
+          </div>
+          <div class="form-group"><label>Post title format</label><input type="text" placeholder="{show} {ep} — {date} Full Episode"></div>
+          <div class="form-group full"><label>Post content template</label><textarea rows="3" placeholder="Watch {show} {ep} full episode online..."></textarea></div>
+          <div class="form-group full">
+            <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Options</div>
+            <div class="toggle-row"><span style="font-size:13px">Prevent duplicate posts</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="toggle-row"><span style="font-size:13px">Auto-schedule on new episode</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="toggle-row"><span style="font-size:13px">Send Telegram alert on completion</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+        <div style="padding:12px 16px;border-top:0.5px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-ghost">Cancel</button>
+          <button class="btn-primary" onclick="alert('Template saved!')">Save template</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS PAGE -->
+    <div class="page" id="page-logs">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <select class="btn" style="padding:5px 10px"><option>All tasks</option><option>Bigg Boss S18 EP142</option><option>Sembaruthi EP1205</option></select>
+        <select class="btn" style="padding:5px 10px"><option>All levels</option><option>Errors only</option><option>Info</option></select>
+      </div>
+      <div class="section">
+        <div class="section-head"><span class="section-title">Live log output</span><span class="badge badge-accent">● Live</span></div>
+        <div style="padding:12px 16px">
+          <div class="log-box" id="mainLog">
+<span class="log-info">[09:14:02]</span> Scheduler triggered: Bigg Boss S18 EP142
+<span class="log-ok">[09:14:03]</span> Hotstar: session valid, starting download...
+<span class="log-info">[09:14:05]</span> Download progress: 12% — 142MB/1.2GB
+<span class="log-info">[09:15:42]</span> Download progress: 68% — 816MB/1.2GB
+<span class="log-ok">[09:18:11]</span> Download complete: biggboss_ep142.mp4 (1.18GB)
+<span class="log-ok">[09:18:12]</span> Upload to Vimeo started...
+<span class="log-info">[09:22:30]</span> Vimeo upload: 55% done
+<span class="log-ok">[09:26:44]</span> Vimeo upload complete. Video ID: 987654321
+<span class="log-ok">[09:26:45]</span> Posting to Site 1 (tamildhool.com)... done
+<span class="log-ok">[09:26:47]</span> Posting to Site 2 (tamilgun.com)... done
+<span class="log-ok">[09:26:49]</span> Posting to Site 3 (tamilblasters.com)... done
+<span class="log-warn">[09:27:00]</span> ZEE5: session check failed — logged out
+<span class="log-err">[09:27:01]</span> ERROR: Sembaruthi EP1205 — download failed (ZEE5 auth error)
+<span class="log-err">[09:27:01]</span> Task paused. Waiting for manual re-auth.
+<span class="log-info">[09:28:15]</span> Sun NXT: starting download for Kana Kaanum EP88...
+<span class="log-ok">[09:29:44]</span> Download complete. Starting JC upload...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS PAGE -->
+    <div class="page" id="page-notifications">
+      <div class="section">
+        <div class="section-head"><span class="section-title">Recent alerts</span><button class="btn">Mark all read</button></div>
+        <div class="notif-row">
+          <div class="notif-icon" style="background:var(--danger-bg)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div style="flex:1"><div style="font-weight:500;font-size:13px">ZEE5 session expired</div><div style="font-size:12px;color:var(--text2);margin-top:2px">3 tasks paused — Sembaruthi EP1205, Mazhavil EP34, and 1 more</div><div class="notif-time">Today, 9:27 AM</div></div>
+          <button class="btn btn-danger" onclick="openLoginModal('ZEE5')">Login</button>
+        </div>
+        <div class="notif-row">
+          <div class="notif-icon" style="background:var(--danger-bg)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div style="flex:1"><div style="font-weight:500;font-size:13px">Upload failed — Mazhavil EP34</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Vimeo API timeout after 3 retries. Task stopped.</div><div class="notif-time">Today, 9:31 AM</div></div>
+          <button class="btn btn-danger" onclick="openRetryModal('Mazhavil EP34')">Retry</button>
+        </div>
+        <div class="notif-row">
+          <div class="notif-icon" style="background:var(--danger-bg)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div style="flex:1"><div style="font-weight:500;font-size:13px">Duplicate post blocked</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Bigg Boss EP142 was already posted to Site 2 — skipped automatically.</div><div class="notif-time">Today, 9:26 AM</div></div>
+        </div>
+        <div class="notif-row" style="opacity:.6">
+          <div class="notif-icon" style="background:var(--success-bg)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div style="flex:1"><div style="font-weight:500;font-size:13px">Bigg Boss EP142 posted successfully</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Posted to 3 sites via Vimeo. No duplicates found.</div><div class="notif-time">Today, 9:26 AM</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: OTP -->
+    <div class="modal-overlay" id="otpModal">
+      <div class="modal">
+        <div class="modal-title" id="otpModalTitle">Login to ZEE5</div>
+        <div class="modal-sub" id="otpModalSub">Enter the OTP sent to your registered mobile/email</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Phone/Email</div>
+        <input type="text" id="ottEmail" placeholder="user@example.com or +91 98765..." style="width:100%;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface1);color:var(--text);font-size:13px;margin-bottom:10px">
+        <button class="btn btn-accent" style="margin-bottom:12px;width:100%;justify-content:center" onclick="sendOTP()">Send OTP</button>
+        <div id="otpSection" style="display:none">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Enter OTP</div>
+          <div class="otp-grid">
+            <input type="text" maxlength="1" class="otp-input" oninput="otpNext(this)">
+            <input type="text" maxlength="1" class="otp-input" oninput="otpNext(this)">
+            <input type="text" maxlength="1" class="otp-input" oninput="otpNext(this)">
+            <input type="text" maxlength="1" class="otp-input" oninput="otpNext(this)">
+            <input type="text" maxlength="1" class="otp-input" oninput="otpNext(this)">
+            <input type="text" maxlength="1" class="otp-input" oninput="otpNext(this)">
+          </div>
+        </div>
+        <div id="otpErr" style="font-size:12px;color:var(--danger-text);display:none;margin-bottom:8px">Invalid OTP. Try again.</div>
+        <div class="modal-foot">
+          <button class="btn-ghost" onclick="closeModal('otpModal')">Cancel</button>
+          <button class="btn-primary" onclick="verifyOTP()">Verify & Login</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Retry -->
+    <div class="modal-overlay" id="retryModal">
+      <div class="modal">
+        <div class="modal-title">Retry task</div>
+        <div class="modal-sub" id="retryTaskName">Sembaruthi EP1205</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Choose how to retry this failed task:</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;align-items:center;gap:10px;padding:10px;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer">
+            <input type="radio" name="retryMode" value="step" checked>
+            <div><div style="font-weight:500;font-size:13px">Retry failed step only</div><div style="font-size:12px;color:var(--text2)">Re-run just the download step that failed</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:10px;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer">
+            <input type="radio" name="retryMode" value="full">
+            <div><div style="font-weight:500;font-size:13px">Restart entire task</div><div style="font-size:12px;color:var(--text2)">Download → Upload → Post from scratch</div></div>
+          </label>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-ghost" onclick="closeModal('retryModal')">Cancel</button>
+          <button class="btn-primary" onclick="doRetry()">Start retry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Logs -->
+    <div class="modal-overlay" id="logModal">
+      <div class="modal" style="width:520px">
+        <div class="modal-title" id="logModalTitle">Task logs</div>
+        <div class="modal-sub" id="logModalSub">Real-time output</div>
+        <div class="log-box" id="modalLog" style="max-height:300px"></div>
+        <div class="modal-foot">
+          <button class="btn-ghost" onclick="closeModal('logModal')">Close</button>
+          <button class="btn-primary" onclick="alert('Log downloaded')">Download log</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+function showPage(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const titles={dashboard:'Dashboard',tasks:'Tasks',ott:'OTT Accounts',templates:'Templates',logs:'Logs',notifications:'Notifications'};
+  document.getElementById('pageTitle').textContent=titles[id]||id;
+}
+function toggleDark(el){
+  document.documentElement.setAttribute('data-dark',el.checked?'true':'');
+  if(!el.checked) document.documentElement.removeAttribute('data-dark');
+}
+function openLoginModal(ott){
+  document.getElementById('otpModalTitle').textContent='Login to '+ott;
+  document.getElementById('otpModalSub').textContent='Enter the OTP sent to your registered mobile/email';
+  document.getElementById('otpSection').style.display='none';
+  document.getElementById('otpErr').style.display='none';
+  document.getElementById('ottEmail').value='';
+  document.querySelectorAll('.otp-input').forEach(i=>i.value='');
+  openModal('otpModal');
+}
+function openOTPModal(name){ openLoginModal(name); }
+function sendOTP(){
+  if(!document.getElementById('ottEmail').value){alert('Enter email or phone first');return;}
+  document.getElementById('otpSection').style.display='block';
+  document.querySelector('.otp-input').focus();
+}
+function otpNext(el){
+  if(el.value.length===1){const next=el.nextElementSibling;if(next)next.focus();}
+}
+function verifyOTP(){
+  const vals=[...document.querySelectorAll('.otp-input')].map(i=>i.value);
+  if(vals.some(v=>!v)){document.getElementById('otpErr').style.display='block';return;}
+  document.getElementById('otpErr').style.display='none';
+  closeModal('otpModal');
+  alert('Login successful! Paused tasks will resume.');
+}
+function openRetryModal(name){
+  document.getElementById('retryTaskName').textContent=name;
+  openModal('retryModal');
+}
+function doRetry(){
+  closeModal('retryModal');
+  alert('Task queued for retry. Check the dashboard for live status.');
+}
+const sampleLogs={
+  'Bigg Boss':`<span class="log-ok">[09:14:03]</span> Hotstar: session valid\n<span class="log-info">[09:14:05]</span> Downloading... 100%\n<span class="log-ok">[09:18:11]</span> Download complete\n<span class="log-ok">[09:22:30]</span> Vimeo upload 100%\n<span class="log-ok">[09:26:45]</span> Posted to Site 1,2,3 — done`,
+  'Sembaruthi':`<span class="log-info">[09:27:00]</span> ZEE5: checking session...\n<span class="log-err">[09:27:01]</span> ERROR: Session expired — auth failed\n<span class="log-err">[09:27:01]</span> Download aborted\n<span class="log-warn">[09:27:02]</span> Task paused. Waiting for re-auth.`,
+  'Kana':`<span class="log-ok">[09:28:15]</span> Sun NXT: session valid\n<span class="log-info">[09:28:16]</span> Downloading... 100%\n<span class="log-ok">[09:29:44]</span> Download complete\n<span class="log-info">[09:30:00]</span> JC upload in progress... 55%`,
+  'Kaadhal':`<span class="log-ok">[09:30:10]</span> SonyLIV: session valid\n<span class="log-info">[09:30:12]</span> Downloading... 38%`,
+  'Mazhavil':`<span class="log-err">[09:27:00]</span> ZEE5: session expired\n<span class="log-err">[09:27:01]</span> Download failed\n<span class="log-err">[09:31:00]</span> Vimeo retry #3 — timeout`,
+  'ZEE5':`<span class="log-warn">[09:27:00]</span> Session check: FAILED\n<span class="log-err">[09:27:01]</span> Auth error — logged out\n<span class="log-info">[09:27:05]</span> Alert sent via Telegram`,
+  'Raja Rani':`<span class="log-ok">[08:55:00]</span> Hotstar: session valid\n<span class="log-ok">[09:01:00]</span> Download complete\n<span class="log-ok">[09:06:00]</span> JC upload done\n<span class="log-ok">[09:06:10]</span> Posted to Site 4,5`,
+  'Azhagiya':`<span class="log-ok">[09:00:00]</span> Sun NXT: session valid\n<span class="log-ok">[09:05:00]</span> Download complete\n<span class="log-ok">[09:11:00]</span> Vimeo upload done\n<span class="log-ok">[09:11:15]</span> Posted to all sites`,
+};
+function openLogModal(name){
+  document.getElementById('logModalTitle').textContent='Logs — '+name;
+  document.getElementById('logModalSub').textContent='Live output';
+  const key=Object.keys(sampleLogs).find(k=>name.includes(k))||'Bigg Boss';
+  document.getElementById('modalLog').innerHTML=sampleLogs[key].split('\n').join('<br>');
+  openModal('logModal');
+}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+document.querySelectorAll('.site-chip').forEach(c=>{
+  c.addEventListener('click',function(){
+    const cb=this.querySelector('input');
+    cb.checked=!cb.checked;
+    this.classList.toggle('checked',cb.checked);
+  });
+});
+</script>
+</body>
+</html>
